@@ -1,102 +1,316 @@
-/*****
-	Create a hash table class/struct.
-	Define an array that holds 27 elements.
-	Define a function called Hash(int)
-	-This function returns the modulo of that int by the size of the table (array).
-	Define an add function that takes an integer.
-	-This function takes the integer, determines the hash of that number by calling the above hash function, then adds it to the table using linear probing for collision resolution.
-	Define a function that looks up a value, it takes an integer, return -1 if the value is not in the table.
-	Create a main that allows the user to add and lookup items in the table.
-*****/
+/******
+Build a hash table using chaining as the collision resolution technique. Insertions into the hash table will correspond to declarations of variables and values in a program, searches will be requests for the value of a variable. Some variables will be local and have a narrow scope while some variables will be global.
 
+The program will take input from a file, another program written in the omnipotent programming language BORG (Bionicly Omnipotent Resistance Grinders) and generate output from this program.
+******/
 #include <iostream>
 #include <string>
+#include <vector>
+#include <stack>
 
-using namespace std;
-
-class HashTable
+class Node
 {
 	public:
-		HashTable();
-		void add_val(int & v);
-		int search(int & v);
-		bool is_full() { return size == 27; }
+		Node() : next_node(0), prev_node(0), variable(""),  value(0), exe_lvl(0) { }
+		Node(std::string var, int & val, int & e_lvl) : next_node(0), prev_node(0), variable(var), value(val), exe_lvl(e_lvl) { } 
 	
 	//private:
-		int hash(int v);
-		int hash_table[27] = {};
-		int size = 0;
+		Node * next_node;
+		Node * prev_node;
+		std::string variable = "";
+		int value = 0;
+		int exe_lvl = 0;
 };
 
-HashTable::HashTable()
+class hashChain
 {
-	for(int i = 0; i < 27; i++) hash_table[i] = -1;
-}
+	public:
+		hashChain() : head(0), tail(0), size(0) { }
+		void insert(std::string & var, int & val, int & e_lvl);
+		int pop(int & e_lvl);
+		int iterate();
+		bool empty() { return (size == 0); }
+		int search(std::string & var, int & e_lvl);
+		
+	private:
+	Node * head;
+	Node * tail;
+	int size = 0;
+}; 
 
-int HashTable::hash(int v)
+void hashChain::insert(std::string & var, int & val, int & e_lvl)
 {
-	int hash_index = v % 27;
-	return hash_index;
-}
-
-void HashTable::add_val(int & v)
-//Takes the integer, determines the hash of that number by calling the above hash function, then adds it to the table using linear probing for collision resolution.
-{
-	int loop = 0;
-	int hash_val = v;
-
-	while(hash_table[hash(hash_val)] != -1 && !is_full() && loop != 2)
+	std::cout << "inserting var " << var << " with val " << val << " and exe_lvl " << e_lvl << "...\n";
+	Node * N = new Node(var, val, e_lvl);
+	if(empty()) head = tail = N;
+	else
 	{
-		hash_val += 1;
-		if(hash(hash_val) == 0) loop++;
+		N->prev_node = tail;
+		tail->next_node = N;
+		tail = N;
+	}
+	size++;
+}
+
+int hashChain::pop(int & e_lvl)
+{
+	//start from tail >> Node * current = new Node(); current = tail
+	//if empty() return 0
+	//if current->exe_lvl == e_lvl {if current == tail{ tail = curent->prev_node} else {connect current->next_node->prev_node to current->prev_node and current->prev_node to curren->next_node}}
+	std::cout << "poppin' bottles...\n";
+	Node * current = new Node();
+	current = tail;
+	if(empty()) return 0;
+	else
+	{
+		for(int i = size; i > 0; i--)
+		{
+			if(current->exe_lvl == e_lvl)
+			{
+				if(current == tail)
+				{
+					tail = current->prev_node;
+					current = tail;
+					size--;
+				}
+				else
+				{
+					current->next_node->prev_node = current->prev_node;
+					current->prev_node->next_node = current->next_node;
+					current = current->prev_node;
+					size--;
+				}
+			}
+			else current = current->prev_node;
+		}
+	}
+	std::cout << "... finished poppin' bottles\n";
+	return 1;
+	
+	/*****
+	int pop_val = 0;
+	if(empty()) return 0;
+	else
+	{
+		pop_val = tail->value;
+		tail = tail->prev_node;
+		size--;
+		return pop_val;
 	}
 	
-	if(!is_full())
-	{
-		hash_table[hash(hash_val)] = v;
-		size++;
-	}
-	else std::cout << "the hash table is full." << endl;
+	Node * current = new Node(); //necessary?
+	delete current; //necessary?
+	
+	****/
 }
 
-int HashTable::search( int & v)
-// Looks up a value, it takes an integer, return -1 if the value is not in the table.
+int hashChain::search(std::string & var, int & e_lvl)
 {
-	for(int i = 0; i < 27; i++) if(hash_table[i] == v) return i;
+	Node * current = new Node();
+	current = head;
+	int i = 0;
+	std::cout << "checking for curr!=tail\n";
+	while(i < size)  //(current != tail) //fails to check. might be failing since when first node is first added, head == tail == node
+	{
+		std::cout << "checking...\n";
+		if((current->variable == var) && (current->exe_lvl == e_lvl)) 
+		{
+			std::cout << "match made! var name is " << current->variable << ", var value is " << current->value << ", and exe lvl is " << current->exe_lvl << '\n';
+			return current->value;
+		}
+		current = current->next_node;
+		i++;
+		if(i == size) break;
+	}
 	return -1;
 }
 
+class hashTable
+{
+	public:
+		hashTable();
+		int hash(std::string & var);
+		void insert(std::string & var, int & val, int & e_lvl);
+		int search(std::string & var, int & e_lvl);
+		void pop_local_scope(int & ind, int & e_lvl);
+	
+	private:
+		//List* am = new List[nodes]; creates array of Lists
+		hashChain* hash_table; //= new hashChain[30]; //creates array named hash_table of type hashChain
+		//int hash_table[30] = { };
+		int table_size = 0;
+};
+
+hashTable::hashTable()
+{
+	std::cout << "creating new hash table... \n";
+	hash_table = new hashChain[30];
+	table_size = 0;
+}
+
+int hashTable::hash(std::string & var)
+{
+	//hash value is (sum((ordinal vals of a char in the string) * (char position))) % TABLESIZE
+	int i = 0;
+	int hash_val = 0;
+	for(int i = 0; i < var.size(); i++) hash_val += var[i] * (i + 1);
+	hash_val = hash_val % 30;
+	std::cout << "hash val is " << hash_val << '\n';
+	return hash_val;
+}
+
+void hashTable::insert(std::string & var, int & val, int & e_lvl)
+{
+	int hash_val = hash(var);
+	hash_table[hash_val].insert(var, val, e_lvl); //calls on hashChain.insert() to insert var, var val, and exe_level
+}
+
+int hashTable::search(std::string & var, int & e_lvl)
+{
+	int srch_ind = hash(var);
+	int srch_val = 0;
+	srch_val = hash_table[srch_ind].search(var, e_lvl); //calls hashChain.search() to search for var to print;
+	return srch_val;
+}
+
+void hashTable::pop_local_scope(int & ind, int & e_lvl)
+{
+	hash_table[ind].pop(e_lvl);
+}
 
 int main()
 {
-	std::cout << "...Hash Table Program..." << endl;
-	HashTable test;
-	std::cout << "Enter 'A' to add a value, 'S' to search for a value, or 'Q' to quit:" << endl;
-	std::string reply = "";
-	int i_val = 0;
-	int s_val = 0;
+	//create stack that will control what level of the program you are in
+	std::stack<std::string> execution;
 	
-	while(getline(std::cin, reply) && reply != "Q")
+	//ifstream infile;
+	//inflie.open("c:\\location\\of\\file.ext") //must escape the backslash
+	
+	std::string in_line ="";
+	int pos = 0, space = 0;
+	int exe_lvl = 0;
+	hashTable test;
+	
+	//while statement to read file input until the thend input (while !eof())
+	while(getline(std::cin, in_line))
 	{
-		if(reply == "A")
+		std::cout << in_line << '\n';
+		std::cout << "start if blocks: \n";
+		
+		if((in_line.find("Q") != std::string::npos)  && in_line.find_first_of("Q") == 0) break; //if(('Q' is found) and Q is in the first position) break;
+		
+		else if((in_line.find("COM")!= std::string::npos) && in_line.find_first_of("COM") == 0)
 		{
-			std::cout << "Enter a value to add to the hash table: " << endl;
-			std::cin >> i_val;
-			std::cout << "Adding value " << i_val << "..." << endl;
-			test.add_val(i_val);
-			std::cout << "Enter 'A' to add a value, 'S' to search for a value, or 'Q' to quit:" << endl;
-			std::cin.ignore();
+			std::cout << "COM in line, position " << in_line.find_first_of("COM") << "\n";
 		}
-		else if(reply == "S")
+		
+		else if((in_line.find("VAR")!= std::string::npos) && (in_line.find_first_of("VAR") == 0))
 		{
-			std::cout << "Enter a value to search for in the hash table: " << endl;
-			std::cin >> s_val;
-			std::cout << "Searching for value " << s_val << "... An index of '-1' indicates the value does not exist in the hash table..." << endl;
-			std::cout << "The value " << s_val << " is in index " << test.search(s_val) << " of the hash table." << endl;
-			std::cout << "Enter 'A' to add a value, 'S' to search for a value, or 'Q' to quit:" << endl;
-			std::cin.ignore();
+			//extract variable name
+			pos = in_line.find_first_of("VAR") + 4; //start index of var name start
+			space = in_line.find_first_of(' ', pos) - 4; //end index of var name
+			std::string var_name = in_line.substr(pos, space); //extract substring of length space beginning @ pos
+			std::cout << "var name = " << var_name << '\n';
+			
+			//extracts variable value
+			int val_pos = in_line.find_last_of(' ') + 1; //var val begins after last space
+			int val_len = in_line.length()-val_pos; //length of var val
+			int var_val = std::stoi(in_line.substr(val_pos, val_len));
+			std::cout << "VAR " << var_name << "'s val begins at pos " << val_pos << ", is " << val_len << " bytes long, and contains the value " << var_val << "\n";
+			if(test.search(var_name, exe_lvl) == -1) test.insert(var_name, var_val, exe_lvl);
+			else std::cout << "Cannot use that variable name in this scope as that variable already exists!\n";
 		}
-		else std::cout << "That value was not valid, please enter a valid value ('A' to add a value, 'S' to search for a value, or 'Q' to quit):" << endl;
+		
+		else if((in_line.find("PRINT")!= std::string::npos)  && in_line.find_first_of("PRINT") == 0)
+		{
+			pos = in_line.find_first_of("PRINT") + 6; //start index of var to print
+			int op_pos = 0;
+			std::string print_var = "";
+			
+			if(in_line.find("%") != std::string::npos)
+			{
+				//find position of operator
+				op_pos = in_line.find("%");
+				int var_name_len = op_pos - (pos + 1);
+				//extract variable name on left side
+				print_var = in_line.substr(pos, var_name_len);
+				//extract new var value on right
+				int op_val = std::stoi(in_line.substr((op_pos + 2)));
+				//find var in hashTable and perform operation
+				for(int i = exe_lvl; i >= 0; i--)
+				{
+					if(test.search(print_var, i) != -1) 
+					{
+						std::cout << "var " << print_var << " does not exist\n";
+						break;
+					}
+					else std::cout << test.search(print_var, i) % op_val << '\n';
+				}
+			}
+			
+			//insert other operators
+			else
+			{
+				int print_len = in_line.length() - pos; //length of var to print
+				print_var = in_line.substr(pos, print_len); //var to print
+				std::cout << "PRINT in line, position " << pos << "\n";
+				std::cout << print_var << "\n";
+				std::cout << "VAR " << print_var << "'s value is ";
+				for(int i = exe_lvl; i >= 0; i--)
+				{
+					if(test.search(print_var, i) != -1) break;
+					else std::cout << test.search(print_var, i) << '\n';
+				}
+			}
+		}
+		
+		else if(in_line.find("=") != std::string::npos) //&& in_line.find_first_of
+		{
+			//find position of assignment op
+			//extract variable name on left side
+			//extract new var value on right
+			//create pointer to var in node (search local scope first, then global)
+			//update var w/ new val
+		}
+		
+		else if(in_line.find("--") != std::string::npos)
+		{
+			//find position of assignment op
+			//extract variable name on left side
+			//extract new var value on right
+			//create pointer to var in node (search local scope first, then global)
+			//update var w/ new val
+		}
+		
+		else if(in_line.find("++") != std::string::npos)
+		{
+			//find position of assignment op
+			//extract variable name on left side
+			//extract new var value on right
+			//create pointer to var in node (search local scope first, then global)
+			//update var w/ new val
+		}
+		
+		else if((in_line.find("START")!= std::string::npos)  && in_line.find_first_of("START") == 0)
+		{
+			std::cout << "current execution level: " << exe_lvl << "\n";
+			exe_lvl++;
+			std::cout << "updated execution level: " << exe_lvl << "\n";
+		}
+		
+		else if((in_line.find("FINISH")!= std::string::npos)  && in_line.find_first_of("FINISH") == 0)
+		{
+			std::cout << "current execution level: " << exe_lvl << "\n";
+			if(exe_lvl > 0) 
+			{
+				for(int i = 0; i < 30; i++) test.pop_local_scope(i, exe_lvl);
+			}
+			if(exe_lvl > 0) exe_lvl--;
+			else std::cout << "cannot drop execution level below 0 \n";
+			std::cout << "updated execution level: " << exe_lvl << "\n";
+		}	
+		//std::cin.ignore();
 	}
+	
 	return 0;
 }
