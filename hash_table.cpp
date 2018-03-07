@@ -7,6 +7,7 @@ The program will take input from a file, another program written in the omnipote
 #include <string>
 #include <vector>
 #include <stack>
+#include <math.h>
 
 class Node
 {
@@ -31,6 +32,7 @@ class hashChain
 		int iterate();
 		bool empty() { return (size == 0); }
 		int search(std::string & var, int & e_lvl);
+		void update(std::string & updt_var, int & updt_val, int & e_lvl);
 		
 	private:
 	Node * head;
@@ -125,6 +127,27 @@ int hashChain::search(std::string & var, int & e_lvl)
 	return -1;
 }
 
+void hashChain::update(std::string & updt_var, int & updt_val, int & e_lvl)
+{
+	Node * current = new Node();
+	current = head;
+	int i = 0;
+	while(i < size)
+	{
+		if((current->variable == updt_var) && (current->exe_lvl == e_lvl))
+		{
+			current->value = updt_val;
+			break;
+		}
+		else
+		{
+			current = current->next_node;
+			i++;
+			if(i == size) break;
+		}
+	}
+}
+
 class hashTable
 {
 	public:
@@ -133,6 +156,7 @@ class hashTable
 		void insert(std::string & var, int & val, int & e_lvl);
 		int search(std::string & var, int & e_lvl);
 		void pop_local_scope(int & ind, int & e_lvl);
+		void update(std::string & updt_var, int & updt_val, int & e_lvl);
 	
 	private:
 		//List* am = new List[nodes]; creates array of Lists
@@ -176,6 +200,12 @@ int hashTable::search(std::string & var, int & e_lvl)
 void hashTable::pop_local_scope(int & ind, int & e_lvl)
 {
 	hash_table[ind].pop(e_lvl);
+}
+
+void hashTable::update(std::string & updt_var, int & updt_val, int & e_lvl)
+{
+	int updt_ind = hash(updt_var);
+	hash_table[updt_ind].update(updt_var, updt_val, e_lvl);
 }
 
 int main()
@@ -241,10 +271,113 @@ int main()
 				{
 					if(test.search(print_var, i) != -1) 
 					{
-						std::cout << "var " << print_var << " does not exist\n";
+						std::cout << "var modulo by " << op_val << " is " << test.search(print_var, i) % op_val << '\n';
 						break;
 					}
-					else std::cout << test.search(print_var, i) % op_val << '\n';
+					else std::cout << print_var << " does not exist\n";
+				}
+			}
+			
+			else if(in_line.find("^") != std::string::npos)
+			{
+				//find position of operator
+				op_pos = in_line.find("^");
+				int var_name_len = op_pos - (pos + 1);
+				//extract variable name on left side
+				print_var = in_line.substr(pos, var_name_len);
+				//extract new var value on right
+				int op_val = std::stoi(in_line.substr((op_pos + 2)));
+				//find var in hashTable and perform operation
+				for(int i = exe_lvl; i >= 0; i--)
+				{
+					if(test.search(print_var, i) != -1) 
+					{
+						std::cout << "var to the power " << op_val << " is " << pow(test.search(print_var, i), op_val) << '\n';
+						break;
+					}
+					else std::cout << print_var << " does not exist\n";
+				}
+			}
+			
+			else if(in_line.find("*") != std::string::npos)
+			{
+				//find position of operator
+				op_pos = in_line.find("*");
+				int var_name_len = op_pos - (pos + 1);
+				//extract variable name on left side
+				print_var = in_line.substr(pos, var_name_len);
+				//extract new var value on right
+				int op_val = std::stoi(in_line.substr((op_pos + 2)));
+				//find var in hashTable and perform operation
+				for(int i = exe_lvl; i >= 0; i--)
+				{
+					if(test.search(print_var, i) != -1) 
+					{
+						std::cout << "var multiplied by " << op_val << " is " << test.search(print_var, i) * op_val << '\n';
+						break;
+					}
+					else std::cout << print_var << " does not exist\n";
+				}
+			}
+			
+			else if(in_line.find("/") != std::string::npos)
+			{
+				//find position of operator
+				op_pos = in_line.find("/");
+				int var_name_len = op_pos - (pos + 1);
+				//extract variable name on left side
+				print_var = in_line.substr(pos, var_name_len);
+				//extract new var value on right
+				int op_val = std::stoi(in_line.substr((op_pos + 2)));
+				//find var in hashTable and perform operation
+				for(int i = exe_lvl; i >= 0; i--)
+				{
+					if(test.search(print_var, i) != -1) 
+					{
+						std::cout << "var divided by " << op_val << " is " << test.search(print_var, i) / op_val << '\n';
+						break;
+					}
+					else std::cout << print_var << " does not exist\n";
+				}
+			}
+			else if(in_line.find("+") != std::string::npos)
+			{
+				//find position of operator
+				op_pos = in_line.find("+");
+				int var_name_len = op_pos - (pos + 1);
+				//extract variable name on left side
+				print_var = in_line.substr(pos, var_name_len);
+				//extract new var value on right
+				int op_val = std::stoi(in_line.substr((op_pos + 2)));
+				//find var in hashTable and perform operation
+				for(int i = exe_lvl; i >= 0; i--)
+				{
+					if(test.search(print_var, i) != -1) 
+					{
+						std::cout << "var plus " << op_val << " is " << test.search(print_var, i) + op_val << '\n';
+						break;
+					}
+					else std::cout << print_var << " does not exist\n";
+				}
+			}
+			else if(in_line.find("-") != std::string::npos)
+			{
+				//find position of operator
+				op_pos = in_line.find("-");
+				int var_name_len = op_pos - (pos + 1);
+				//extract variable name on left side
+				print_var = in_line.substr(pos, var_name_len);
+				//extract new var value on right
+				int op_val = std::stoi(in_line.substr((op_pos + 2)));
+				//find var in hashTable and perform operation
+				for(int i = exe_lvl; i >= 0; i--)
+				{
+					if(test.search(print_var, i) != -1) 
+					{
+						std::cout << "var minus " << op_val << " is " << test.search(print_var, i) - op_val << '\n';
+						break;
+					}
+					else std::cout << print_var << " does not exist\n";
 				}
 			}
 			
@@ -264,31 +397,68 @@ int main()
 			}
 		}
 		
-		else if(in_line.find("=") != std::string::npos) //&& in_line.find_first_of
+		else if((in_line.find("VAR") == std::string::npos) && (in_line.find("=") != std::string::npos)) //IF VAR not in line and assign op in line
 		{
-			//find position of assignment op
 			//extract variable name on left side
 			//extract new var value on right
 			//create pointer to var in node (search local scope first, then global)
 			//update var w/ new val
+			
+			pos = in_line.find_first_of("="); //assignment operator pos
+			std::string updt_var = in_line.substr(0, (pos - 1)); //var name to update
+			std::cout << "var name to update: " << updt_var << "yeah!\n";
+			int updt_val = std::stoi(in_line.substr((pos + 2)));
+			std::cout << "value to update: " << updt_val << "yeah!!\n";
+			for(int i = exe_lvl; i >= 0; i--)
+			{
+				if(test.search(updt_var, i) != -1)
+				{
+					test.update(updt_var, updt_val, i);
+					break;
+				}
+				else std::cout << "nothing to update\n";
+			}
 		}
 		
 		else if(in_line.find("--") != std::string::npos)
-		{
-			//find position of assignment op
-			//extract variable name on left side
-			//extract new var value on right
-			//create pointer to var in node (search local scope first, then global)
-			//update var w/ new val
+		{	
+			pos = in_line.find_first_of("--"); //assignment operator pos
+			std::string updt_var = in_line.substr(0, pos); //var name to update
+			std::cout << "var name to update: " << updt_var << "yeah!\n";
+			int updt_val = 0;
+			for(int i = exe_lvl; i >= 0; i--)
+			{
+				if(test.search(updt_var, i) != -1)
+				{
+					updt_val = test.search(updt_var, i) - 1;
+					std::cout << "value to update: " << updt_val << "yeah!!\n";
+					test.update(updt_var, updt_val, i);
+					break;
+				}
+				else if(i != 0) continue;
+				else std::cout << "nothing to update\n";
+			}
 		}
 		
 		else if(in_line.find("++") != std::string::npos)
 		{
-			//find position of assignment op
-			//extract variable name on left side
-			//extract new var value on right
-			//create pointer to var in node (search local scope first, then global)
-			//update var w/ new val
+			//same code used in "--"
+			pos = in_line.find_first_of("++"); //assignment operator pos
+			std::string updt_var = in_line.substr(0, pos); //var name to update
+			std::cout << "var name to update: " << updt_var << "yeah!\n";
+			int updt_val = 0;
+			for(int i = exe_lvl; i >= 0; i--)
+			{
+				if(test.search(updt_var, i) != -1)
+				{
+					updt_val = test.search(updt_var, i) + 1;
+					std::cout << "value to update: " << updt_val << "yeah!!\n";
+					test.update(updt_var, updt_val, i);
+					break;
+				}
+				else if(i != 0) continue;
+				else std::cout << "nothing to update\n";
+			}
 		}
 		
 		else if((in_line.find("START")!= std::string::npos)  && in_line.find_first_of("START") == 0)
